@@ -115,18 +115,18 @@ A Lumia é construída sobre um **grafo LangGraph** com nós especializados e um
 
 ```mermaid
 flowchart TD
-    A([Entrada do Usuário]) --> B[Guardrail\nSegurança & Ética]
-    B -->|Conteúdo inapropriado| C[Recusa Socrática]
-    B -->|Emergência detectada| D[Resposta de Emergência]
-    B -->|Seguro| E[Roteador de Intenção]
+    A([Entrada do Estudante]) --> B[Guardião de Segurança\nNível de Risco]
+    B -->|cola_academica| C[Recusa Socrática\nPerguntas Reflexivas]
+    B -->|risco_seguranca| D[Resposta de Emergência\nCanais de Apoio]
+    B -->|seguro / safe| E[Roteador de Intenções]
 
-    E -->|concept_question| F[RAG Node]
-    E -->|habit_query| G[Habit Tool Node]
-    E -->|chitchat| H[Chitchat Node]
+    E -->|pergunta_conceitual| F[Recuperador RAG]
+    E -->|consulta_habito| G[Ferramentas de Hábitos]
+    E -->|conversa_casual| H[Conversa Informal]
 
-    F --> F1[MultiQuery Retriever\n3 reescritas do prompt]
+    F --> F1[MultiQuery Retriever\n3 reescritas da pergunta]
     F1 --> F2[Busca Híbrida\nChromaDB 60% + BM25 40%]
-    F2 --> F3[FlashRank Reranker\nTop-3 chunks]
+    F2 --> F3[FlashRank Reranker\nTop-3 chunks TinyBERT]
     F3 --> I[Geração Socrática\nGemini 2.5 Flash]
 
     G --> I
@@ -139,24 +139,24 @@ flowchart TD
 
 | Componente | Implementação | Finalidade |
 |---|---|---|
-| **Embedding** | `gemini-embedding-001` | Vetorização semântica dos documentos |
-| **Vector Store** | ChromaDB (332 chunks) | Busca por similaridade coseno |
-| **Lexical Search** | BM25 (`rank_bm25`) | Busca por palavras-chave exatas |
-| **Fusion** | `EnsembleRetriever` (60/40) | Combina busca semântica e léxica |
-| **Reranker** | FlashRank `ms-marco-TinyBERT-L-2-v2` | Reordena chunks por relevância real |
-| **Query Expansion** | `MultiQueryRetriever` (3 variantes) | Lida com perguntas ambíguas |
-| **Memória** | `SqliteSaver` (LangGraph) | Histórico persistente por sessão |
-| **Streaming** | Django `StreamingHttpResponse` + SSE | Respostas em tempo real |
-| **LLM** | `gemini-2.5-flash` | Geração socrática das respostas |
+| **Embedding** | `gemini-embedding-001` | Vetorização semântica dos documentos pedagógicos |
+| **Vector Store** | ChromaDB (332 chunks) | Busca por similaridade cosseno persistida |
+| **Lexical Search** | BM25 (`rank_bm25`) | Busca por palavras-chave e termos exatos |
+| **Fusion** | `EnsembleRetriever` (60/40) | Combina busca semântica e busca léxica |
+| **Reranker** | FlashRank `ms-marco-TinyBERT-L-2-v2` | Reordena trechos por relevância factual real |
+| **Query Expansion** | `MultiQueryRetriever` (3 variantes) | Reformula dúvidas coloquiais de adolescentes |
+| **Memória** | `SqliteSaver` (LangGraph) | Histórico conversacional persistente por sessão |
+| **Streaming** | Django `StreamingHttpResponse` + SSE | Respostas reativas palavra por palavra |
+| **LLM** | `gemini-2.5-flash` | Geração socrática das respostas reflexivas |
 
 ### Roteamento de Intenção
 
 ```
-concept_question  → RAG completo + geração socrática
-habit_query       → ferramenta de hábitos + LLM
-chitchat          → resposta direta amigável
-emergency         → protocolo de segurança imediato
-unsafe            → recusa ética + redirecionamento
+pergunta_conceitual (concept_question) → RAG híbrido + geração socrática
+consulta_habito     (habit_query)      → Ferramentas de rotina/tela + LLM
+conversa_casual     (casual_chat)      → Diálogo amigável sem RAG
+risco_seguranca     (safety_risk)      → Protocolo de emergência imediato (SaferNet, 188, 100)
+cola_academica      (academic_cheat)   → Recusa socrática com perguntas instigantes
 ```
 
 ---
@@ -394,52 +394,55 @@ docker compose up --build
 
 ## Endpoints da API
 
-### Autenticação — `/api/auth/`
+A API oferece roteamento bilíngue (português brasileiro e inglês):
+
+### Autenticação — `/api/autenticacao/` (ou `/api/auth/`)
 
 | Método | Endpoint | Descrição | Autenticação |
 |---|---|---|---|
-| `POST` | `/api/auth/google/` | Login via token Google OAuth 2.0 | Pública |
-| `POST` | `/api/auth/register/` | Cadastro de novo estudante | Pública |
-| `GET` | `/api/auth/profile/` | Perfil do estudante autenticado | JWT |
-| `PUT` | `/api/auth/profile/` | Atualizar perfil do estudante | JWT |
+| `POST` | `/api/autenticacao/google/` ou `/api/auth/google/` | Login via token Google OAuth 2.0 | Pública |
+| `POST` | `/api/autenticacao/cadastro/` ou `/api/auth/register/` | Cadastro de novo estudante | Pública |
+| `GET` | `/api/autenticacao/perfil/` ou `/api/auth/profile/` | Perfil do estudante autenticado | JWT |
+| `GET` | `/api/autenticacao/configuracao/` ou `/api/auth/config/` | Configurações públicas do OAuth | Pública |
 
-### Progresso — `/api/`
-
-| Método | Endpoint | Descrição | Autenticação |
-|---|---|---|---|
-| `GET` | `/api/progress/` | Progresso geral do estudante | JWT |
-| `POST` | `/api/progress/track/` | Registrar módulo visitado | JWT |
-
-### Higiene Digital — `/api/digital-hygiene/`
+### Progresso & Navegação — `/api/progresso/` (ou `/api/`)
 
 | Método | Endpoint | Descrição | Autenticação |
 |---|---|---|---|
-| `GET` | `/api/digital-hygiene/habits/` | Listar hábitos do estudante | JWT |
-| `POST` | `/api/digital-hygiene/habits/` | Criar novo hábito | JWT |
-| `PUT` | `/api/digital-hygiene/habits/<id>/` | Atualizar hábito | JWT |
-| `DELETE` | `/api/digital-hygiene/habits/<id>/` | Remover hábito | JWT |
-| `GET` | `/api/digital-hygiene/screen-time/` | Meta de tempo de tela | JWT |
-| `POST` | `/api/digital-hygiene/screen-time/` | Definir/atualizar meta | JWT |
+| `GET` | `/api/progresso/estado/` ou `/api/state/` | Progresso geral do estudante nas trilhas | Pública |
+| `POST` | `/api/progresso/navegacao/alternar/` ou `/api/navigation/switch/` | Telemetria de mudança de seção | Pública |
+| `POST` | `/api/progresso/assistente/dialogo/` ou `/api/assistant/chat/` | Diálogo socrático inicial | Pública |
+
+### Higiene Digital — `/api/higiene-digital/` (ou `/api/digital-hygiene/`)
+
+| Método | Endpoint | Descrição | Autenticação |
+|---|---|---|---|
+| `GET` | `/api/higiene-digital/habitos/` ou `/api/digital-hygiene/habits/` | Listar hábitos do estudante (filtro ?data=) | JWT |
+| `POST` | `/api/higiene-digital/habitos/criar/` ou `/api/digital-hygiene/habits/create/` | Criar novo hábito de foco ou online | JWT |
+| `POST` | `/api/higiene-digital/habitos/alternar/` ou `/api/digital-hygiene/habits/toggle/` | Alternar conclusão do hábito | JWT |
+| `POST` | `/api/higiene-digital/habitos/excluir/` ou `/api/digital-hygiene/habits/delete/` | Remover hábito da agenda | JWT |
+| `GET` | `/api/higiene-digital/tempo-tela/` ou `/api/digital-hygiene/screen-time/` | Consultar metas de tempo de tela | JWT |
+| `POST` | `/api/higiene-digital/tempo-tela/` ou `/api/digital-hygiene/screen-time/` | Definir/atualizar limites e proporções | JWT |
 
 ### Lumia Chatbot — `/api/chatbot/`
 
 | Método | Endpoint | Descrição | Autenticação |
 |---|---|---|---|
-| `POST` | `/api/chatbot/message/` | Enviar mensagem → streaming SSE | JWT |
-| `GET` | `/api/chatbot/sessions/` | Listar sessões de chat do usuário | JWT |
-| `GET` | `/api/chatbot/session/<session_id>/` | Histórico de uma sessão | JWT |
+| `POST` | `/api/chatbot/mensagem/` ou `/api/chatbot/message/` | Enviar dúvida → streaming SSE | JWT |
+| `GET` | `/api/chatbot/sessoes/` ou `/api/chatbot/sessions/` | Listar sessões de chat do usuário | JWT |
+| `GET` | `/api/chatbot/sessao/<id_sessao>/` ou `/api/chatbot/session/<id_sessao>/` | Histórico completo da sessão | JWT |
 
-#### Exemplo — Enviar mensagem para a Lumia
+#### Exemplo — Enviar mensagem para a Lumia com Streaming SSE
 
 ```bash
-curl -X POST http://localhost:8000/api/chatbot/message/ \
+curl -X POST http://localhost:8000/api/chatbot/mensagem/ \
   -H "Authorization: Bearer <seu_jwt_token>" \
   -H "Content-Type: application/json" \
-  -d '{"message": "O que é engenharia social?", "session_id": "opcional-uuid"}' \
+  -d '{"mensagem": "O que é engenharia social?", "id_sessao": "opcional-uuid"}' \
   --no-buffer
 ```
 
-A resposta é um stream SSE com eventos do tipo `data: {"chunk": "..."}`.
+> **Nota de compatibilidade:** O corpo da requisição aceita tanto `{"mensagem": "..."}` quanto `{"message": "..."}`, e o evento de streaming retorna identificadores em português e inglês (`tipo` / `type`, `id_sessao` / `session_id`).
 
 ---
 
