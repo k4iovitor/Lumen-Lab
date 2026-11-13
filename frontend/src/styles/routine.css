@@ -1,0 +1,715 @@
+/* ==========================================================================
+   LumenLab - Higiene Digital & Rotina Consciente (Vibrant Palette)
+   ========================================================================== */
+
+.routine-dashboard {
+  padding-top: 4px;
+}
+
+/* Banner de Destaque */
+.routine-banner {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  background: linear-gradient(115deg, #efe8ff 0%, #e0eeff 100%);
+  border: 1.5px solid #d4c2fc;
+  border-radius: 16px;
+  padding: 26px 30px;
+  margin-bottom: 26px;
+  box-shadow: 0 4px 20px rgba(112, 66, 244, 0.06);
+}
+
+.routine-banner-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #7042f4;
+  box-shadow: 0 4px 14px rgba(112, 66, 244, 0.16);
+}
+
+.routine-banner-icon svg {
+  width: 30px;
+  height: 30px;
+}
+
+.routine-banner h2 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  color: #23153c;
+}
+
+.routine-banner p {
+  font-size: 13px;
+  color: #4b3e65;
+  line-height: 1.7;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.routine-demo {
+  font-size: 10px;
+  letter-spacing: 1px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* Colunas do Layout */
+.routine-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(310px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.routine-panel {
+  border: 1.5px solid #e5daf3;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 26px;
+  box-shadow: 0 4px 20px rgba(112, 66, 244, 0.04);
+}
+
+.routine-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.routine-section-heading .eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.1px;
+  color: #7042f4;
+  margin-bottom: 6px;
+}
+
+.routine-section-heading h3 {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: #261742;
+}
+
+.routine-add {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #7042f4;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(112, 66, 244, 0.28);
+  transition: all 0.2s ease;
+}
+
+.routine-add:hover {
+  background: #5b28df;
+  transform: translateY(-1px);
+}
+
+.routine-add svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* Barra de Navegação do Calendário */
+.calendar-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+  margin-bottom: 8px;
+  padding: 6px 2px;
+}
+
+.calendar-month-year {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.calendar-month-year h4 {
+  font-size: 15px;
+  font-weight: 800;
+  color: #2c1c49;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.calendar-nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calendar-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 12px;
+  background: #f7f4fc;
+  border: 1.5px solid #e7ddf3;
+  border-radius: 8px;
+  color: #7042f4;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.calendar-nav-btn:hover {
+  background: #ede4f9;
+  border-color: #d1bfe8;
+  color: #5825d7;
+}
+
+.calendar-today-btn {
+  background: #ede4f9;
+  color: #5825d7;
+  border-color: #c4b5fd;
+}
+
+/* Seletor da Semana */
+.routine-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin: 20px 0;
+}
+
+.routine-week button {
+  padding: 13px 4px 15px;
+  border: 1.5px solid #ede4f9;
+  background: #fcfbfe;
+  border-radius: 12px;
+  position: relative;
+  color: #64537b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.routine-week button:hover {
+  background: #f5effe;
+  border-color: #d9c4f8;
+}
+
+.routine-week button span {
+  font-size: 11px;
+  font-weight: 600;
+  display: block;
+}
+
+.routine-week button b {
+  display: block;
+  font-size: 18px;
+  font-weight: 750;
+  margin-top: 6px;
+  color: #2c1a4b;
+}
+
+.routine-week button.selected {
+  background: linear-gradient(135deg, #7042f4 0%, #8b5cf6 100%) !important;
+  border-color: #5825d7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(112, 66, 244, 0.35);
+}
+
+.routine-week button.selected span {
+  color: #f3e8ff !important;
+}
+
+.routine-week button.selected b {
+  color: #ffffff !important;
+}
+
+.routine-week button.has-habits::after {
+  content: '';
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ec4899;
+}
+
+.routine-week button.selected.has-habits::after {
+  background: #ffffff;
+}
+
+.routine-week i {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #7042f4;
+  border-radius: 50%;
+  bottom: 6px;
+  left: calc(50% - 2px);
+}
+
+.routine-week button.selected i {
+  background: #ffffff;
+}
+
+/* Rótulo do Dia Selecionado */
+.routine-day-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1.5px solid #f0eaf6;
+  padding-bottom: 16px;
+  margin-bottom: 10px;
+}
+
+.routine-day-label b {
+  font-size: 13px;
+  font-weight: 750;
+  color: #2b1a47;
+}
+
+.routine-day-label span {
+  font-size: 11px;
+}
+
+/* Card de Evento / Hábito */
+.routine-event {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 18px 0;
+  border-bottom: 1px solid #f6f0fa;
+  position: relative;
+}
+
+.routine-event time {
+  font-size: 12px;
+  font-weight: 750;
+  color: #7042f4;
+  width: 44px;
+  flex-shrink: 0;
+  padding-top: 4px;
+}
+
+.routine-event-dot {
+  width: 10px;
+  height: 10px;
+  border: 2.5px solid #7042f4;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+  background: white;
+}
+
+.routine-event-dot.foco {
+  border-color: #0ea5e9;
+}
+
+.routine-event-dot.online {
+  border-color: #ec4899;
+}
+
+.routine-event-content {
+  flex: 1;
+}
+
+.routine-kind {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  border-radius: 5px;
+  padding: 3px 7px;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
+.routine-kind.foco {
+  color: #0369a1;
+  background: #e0f2fe;
+}
+
+.routine-kind.online {
+  color: #be185d;
+  background: #fce7f3;
+}
+
+.routine-event h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #24143d;
+  margin-top: 2px;
+}
+
+.routine-event p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #584672;
+  margin-top: 4px;
+}
+
+.routine-check {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-top: 10px;
+  border: 2px solid #c4b5fd;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #7042f4;
+  font-weight: 800;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.routine-check:hover {
+  border-color: #7042f4;
+  background: #fbf9ff;
+}
+
+.finished .routine-check {
+  background: #10b981;
+  border-color: #059669;
+  color: #ffffff;
+}
+
+.finished h4 {
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.finished p {
+  color: #9ca3af;
+}
+
+.routine-delete-btn {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+  transition: all 0.2s;
+}
+
+.routine-delete-btn:hover {
+  color: #e11d48;
+  background: #ffe4e6;
+}
+
+/* Estado Vazio */
+.routine-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  background: #faf8fe;
+  border: 2px dashed #ddd6fe;
+  border-radius: 14px;
+  margin: 18px 0;
+}
+
+.routine-empty-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #ede8ff;
+  color: #7042f4;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 14px;
+}
+
+.routine-empty-state h4 {
+  font-size: 15px;
+  font-weight: 800;
+  color: #2b1847;
+  margin-bottom: 6px;
+}
+
+.routine-empty-state p {
+  font-size: 12px;
+  color: #554470;
+  line-height: 1.6;
+  max-width: 420px;
+  margin: 0 auto 16px;
+}
+
+.routine-empty-add-btn {
+  background: #7042f4;
+  color: #ffffff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(112, 66, 244, 0.28);
+  transition: all 0.2s;
+}
+
+.routine-empty-add-btn:hover {
+  background: #5b28df;
+}
+
+/* Formulário de Adicionar */
+.routine-form {
+  display: flex;
+  gap: 12px;
+  padding: 18px;
+  background: #faf8ff;
+  border: 1.5px solid #e9d5ff;
+  border-radius: 12px;
+  margin-bottom: 18px;
+}
+
+.routine-form-grid {
+  display: grid;
+  grid-template-columns: 145px 115px 1fr 145px;
+  gap: 10px;
+}
+
+.routine-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4c1d95;
+}
+
+.routine-form input {
+  width: 100%;
+  border: 1.5px solid #d8b4fe;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: #2e1065;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+
+.routine-form input:focus {
+  outline: none;
+  border-color: #7042f4;
+  box-shadow: 0 0 0 3px rgba(112, 66, 244, 0.15);
+}
+
+/* Painel Lateral de Tempo de Tela */
+.routine-side {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.screen-total {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin: 10px 0 14px;
+}
+
+.screen-total-val {
+  font-size: 36px;
+  font-family: Manrope, sans-serif;
+  font-weight: 850;
+  letter-spacing: -1.2px;
+  line-height: 1;
+}
+
+.screen-total-sub {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.screen-track {
+  height: 9px;
+  background: #ede9f6;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.screen-track > i {
+  display: block;
+  height: 100%;
+  border-radius: 12px;
+  transition: width 0.3s ease;
+}
+
+.screen-remaining {
+  font-size: 12px;
+  color: #4b3e65;
+  margin-top: 10px;
+  font-weight: 550;
+}
+
+.screen-remaining b {
+  font-weight: 800;
+  color: #7042f4;
+}
+
+.routine-limit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 0;
+  margin-top: 14px;
+  border-bottom: 1.5px solid #f3e8ff;
+}
+
+.routine-limit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.routine-limit select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid #c084fc;
+  border-radius: 9px;
+  color: #581c87;
+  background: #faf5ff;
+  padding: 9px 12px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.routine-limit select:focus {
+  border-color: #7042f4;
+  box-shadow: 0 0 0 3px rgba(112, 66, 244, 0.15);
+}
+
+.screen-categories {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.category-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.category-track {
+  width: 100%;
+  height: 5px;
+  background: #f3f0fa;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.category-track i {
+  height: 100%;
+  display: block;
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+/* Card de Pausa Consciente */
+.routine-pause {
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.routine-pause-icon {
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 14px;
+}
+
+.routine-pause h3 {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+}
+
+.routine-pause p {
+  font-size: 12px;
+  line-height: 1.7;
+  margin-top: 8px;
+}
+
+.routine-pause > button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border-radius: 9px;
+  padding: 13px 16px;
+  font-size: 12px;
+  margin-top: 18px;
+  transition: all 0.2s ease;
+}
+
+.routine-pause > button:hover {
+  transform: translateY(-1px);
+}
+
+.routine-agenda-foot {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  border-top: 1.5px solid #f0eaf6;
+  padding-top: 18px;
+  color: #554470;
+  font-size: 11px;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.routine-soft-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Responsividade */
+@media (max-width: 1100px) {
+  .routine-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .routine-form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .routine-week button span {
+    font-size: 9px;
+  }
+  .routine-week button b {
+    font-size: 15px;
+  }
+}

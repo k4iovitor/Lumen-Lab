@@ -1,0 +1,244 @@
+.curriculum-art {
+  height: auto;
+  aspect-ratio: 1000 / 520;
+}
+
+.module-cover-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.intro-artwork {
+  width: 90px;
+  height: 90px;
+  flex-shrink: 0;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 18px;
+}
+
+/* Shared type scale: body copy stays at 18px, including on small screens. */
+:root {
+  --text-caption: 14px;
+  --text-body: 18px;
+  --text-heading-small: 22px;
+  --text-heading: 28px;
+  --text-title: 38px;
+}
+
+/* Keep supporting text readable without competing with the headings. */
+.eyebrow,
+.curriculum-card-body .eyebrow,
+.phase-sidebar small,
+.lesson-card-heading .eyebrow,
+.learning-note > span:first-child,
+.preview-label,
+.intro-preview,
+.feature-label,
+.feature-card .feature-label,
+.preview-top,
+.hygiene-redirect > span:first-child {
+  font-size: 10px;
+}
+
+.workspace {
+  font-size: 10px;
+  letter-spacing: 1.2px;
+}
+
+.page-title p,
+.curriculum-heading p,
+.curriculum-card-body > p,
+.module-intro p,
+.phase-content > p,
+.theory-paragraph,
+.practice-resources p,
+.packet-exercise > p {
+  font-size: 13px;
+}
+
+.curriculum-count,
+.phase-chips > span,
+.explore-link,
+.learning-note p,
+.back-modules,
+.phase-sidebar b,
+.theory-figure figcaption,
+.practice-resources h4,
+.feature-open,
+.packet-exercise small,
+.preview-disclaimer,
+.hygiene-redirect > p {
+  font-size: 12px;
+}
+
+header,
+.date,
+.profile b,
+.profile p,
+footer,
+.ai-page small,
+.habit-grid span,
+.quiz-preview > span,
+.case-preview > span,
+.flashcard-preview > span,
+.password-preview small,
+.habit-preview small,
+.feed-preview small,
+.face-preview small {
+  font-size: 11px;
+}
+
+.phase-sidebar b {
+  line-height: 1.65;
+}
+
+.phase-sidebar small {
+  letter-spacing: .6px;
+}
+
+.phase-chips {
+  flex-wrap: wrap;
+}
+
+nav small {
+  font-size: 9px;
+}
+
+@media (max-width: 760px) {
+  .intro-artwork {
+    width: 64px;
+    height: 64px;
+    border-radius: 13px;
+  }
+
+  .curriculum-card-body > p,
+  .theory-paragraph,
+  .phase-content > p,
+  .module-intro p,
+  .page-title p {
+    font-size: 12px;
+  }
+
+  .curriculum-art {
+    height: auto;
+  }
+
+  footer {
+    font-size: 10px;
+  }
+}
+
+.app {
+  font-size: var(--text-body);
+}
+
+.app :is(
+  .page-title p, .curriculum-heading p, .curriculum-card-body > p,
+  .module-intro p, .phase-content > p, .theory-paragraph,
+  .practice-resources p, .packet-exercise > p, .hygiene-redirect > p,
+  .feature-card p, .mail-preview p, .case-preview p, .face-preview p,
+  .password-preview p, .habit-preview p, .feed-preview > p,
+  .flashcard-preview p, .quiz-option, .case-browser,
+  .mail-preview > span, .feed-preview > div,
+  .ai-page > p, .suggestions button, .fake-input,
+  .home-section-heading p, .home-phase-body > p, .home-bottom-grid p,
+  .home-nia-bubble, .routine-banner p, .routine-event p, .routine-pause p,
+  .routine-limit, .routine-limit select, .screen-categories > div,
+  .screen-categories b, .routine-form input, .routine-form button,
+  .routine-add, .routine-pause > button,
+  .home-text-link, .home-continue, .explore-link, .back-modules,
+  .feature-open, .phase-sidebar b, .practice-resources h4,
+  .learning-note p, .toast, .toast button
+) {
+  font-size: var(--text-body);
+}
+
+.app :is(
+  .page-title p, .curriculum-card-body > p, .phase-content > p,
+  .theory-paragraph, .feature-card p, .home-phase-body > p,
+  .home-bottom-grid p, .routine-event p, .routine-banner p,
+  .routine-pause p, .ai-page > p
+) {
+  line-height: 1.8;
+}
+
+.app :is(
+  .eyebrow, .workspace, .curriculum-count, .phase-chips > span,
+  .phase-sidebar small, .theory-figure figcaption, .packet-exercise small,
+  .preview-disclaimer, .preview-label, .intro-preview, .feature-label,
+  .preview-top, .hygiene-redirect > span:first-child,
+  .learning-note > span:first-child, header, .date, .profile p, footer,
+  .ai-page small, .quiz-preview > span, .case-preview > span,
+  .flashcard-preview > span, .password-preview small, .habit-preview small,
+  .feed-preview small, .face-preview small, .home-status,
+  .home-progress-label, .home-module-meta, .home-nia-top > span,
+  .home-demo-note, .routine-demo, .routine-week button span,
+  .routine-day-label span, .routine-event time, .routine-kind,
+  .routine-agenda-foot, .routine-sample-label, .screen-total > span,
+  .screen-remaining, .screen-note, .routine-disclaimer, .routine-form label
+) {
+  font-size: var(--text-caption);
+}
+
+.app :is(.profile b, .routine-day-label b) {
+  font-size: var(--text-body);
+}
+
+.app h1 {
+  font-size: var(--text-title);
+  line-height: 1.3;
+}
+
+.app :is(
+  .curriculum-heading h2, .module-intro h2, .home-section-heading h2,
+  .home-bottom-grid h2, .routine-banner h2, .phase-content > h3,
+  .curriculum-card-body h3, .home-phase-body h3
+) {
+  font-size: var(--text-heading);
+  line-height: 1.4;
+}
+
+.app :is(
+  .theory-title, .lesson-card-heading h4, .feature-card h4,
+  .packet-exercise > h4, .flashcard-preview h4, .mail-preview h4,
+  .quiz-preview h4, .case-preview h4, .face-preview h4,
+  .routine-section-heading h3, .routine-event h4, .routine-pause h3,
+  .hygiene-redirect > b, .routine-week button b
+) {
+  font-size: var(--text-heading-small);
+  line-height: 1.5;
+}
+
+.app .phase-sidebar b { overflow-wrap: anywhere; }
+.app .routine-event time { width: 48px; flex-shrink: 0; }
+.app .home-phase-body h3 { min-height: 80px; }
+.app .home-nia-top { flex-wrap: wrap; }
+.app .workspace { letter-spacing: .8px; }
+.app .routine-day-label { flex-wrap: wrap; }
+
+@media (min-width: 761px) {
+  .app nav button { font-size: var(--text-body); white-space: normal; }
+  .app nav button > svg { flex-shrink: 0; }
+  .app nav small { font-size: 12px; }
+  .app .profile { flex-wrap: wrap; }
+  .app .workspace { overflow-wrap: anywhere; }
+}
+
+@media (max-width: 1100px) {
+  .app .routine-section-heading { flex-wrap: wrap; }
+  .app .curriculum-grid { grid-template-columns: 1fr; }
+  .app .phase-layout { grid-template-columns: 1fr; }
+  .app .home-bottom-grid { grid-template-columns: 1fr; }
+  .app .suggestions { flex-direction: column; }
+}
+
+@media (max-width: 760px) {
+  .app h1 { font-size: 32px; }
+  .app .home-phase-body h3 { min-height: 0; }
+  .app .page-title p { max-width: none; }
+  .app .curriculum-heading { flex-wrap: wrap; }
+  .app .routine-week button span { font-size: 12px; }
+}

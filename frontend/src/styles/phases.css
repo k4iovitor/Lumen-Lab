@@ -1,0 +1,336 @@
+.phase-map, .phase-screen {
+  --phase-accent: #7042f4;
+  --phase-ink: #1e1435;
+  --phase-muted: #635b77;
+  --phase-line: #e9d5ff;
+  --phase-surface: #ede8ff;
+}
+
+/* Grade de fases flexível: 3 colunas em telas grandes, 2 colunas para módulos com 2 fases, 1 no mobile */
+.phase-map {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 22px;
+  margin-top: 28px;
+  align-items: stretch;
+}
+
+/* 
+  Todos os cartões com números possuem a mesma altura padrão 
+  (igual à altura do cartão 'Métodos de privacidade de dados')
+*/
+.phase-map-card {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  background: white;
+  border: 1.5px solid var(--phase-line);
+  border-radius: 18px;
+  padding: 24px;
+  text-align: left;
+  color: var(--phase-ink);
+  transition: transform .2s, box-shadow .2s, border-color .2s;
+  width: 100%;
+  min-height: 285px; /* Altura padrão padronizada com o card de privacidade */
+  height: 100%;
+  box-sizing: border-box;
+  box-shadow: 0 4px 18px rgba(112, 66, 244, 0.05);
+}
+
+.phase-map-card:hover {
+  transform: translateY(-4px);
+  border-color: #c4b5fd;
+  box-shadow: 0 14px 30px rgba(112, 66, 244, 0.16);
+}
+
+/* 
+  Pílula do número: Tamanho e proporção 100% idênticos em todos os cartões,
+  ocupando a largura total do topo do cartão com a mesma altura.
+*/
+.phase-map-number {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 100% !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ede8ff 0%, #fae8ff 100%);
+  border: 1px solid #ddd6fe;
+  color: var(--phase-accent);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  margin-bottom: 18px;
+  box-sizing: border-box;
+}
+
+/* Corpo do cartão */
+.phase-map-card > div {
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Área de Título e Badge para alinhamento vertical consistente */
+.phase-map-card-header {
+  min-height: 54px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.phase-map-card h3 {
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 800;
+  margin: 0;
+  color: var(--phase-ink);
+}
+
+.phase-map-card p {
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--phase-muted);
+  margin: 0;
+  flex: 1;
+}
+
+/* Link de ação sempre alinhado na base inferior do cartão */
+.phase-map-format {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--phase-accent);
+  margin-top: auto;
+  padding-top: 18px;
+  transition: transform .2s;
+}
+
+.phase-map-card:hover .phase-map-format {
+  transform: translateX(4px);
+  color: #5b28df;
+}
+
+/* Leitor de Fase Dedicado */
+.phase-screen-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.phase-screen-nav .back-modules {
+  margin: 0;
+}
+
+.phase-screen-nav .eyebrow {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.phase-screen-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding: 40px;
+  border: 1.5px solid #ddd6fe;
+  border-radius: 22px;
+  background: linear-gradient(120deg, #ede8ff 0%, #fae8ff 100%);
+  box-shadow: 0 8px 24px rgba(112, 66, 244, 0.08);
+  min-height: 280px;
+}
+
+.phase-screen.cyber .phase-screen-hero {
+  background: linear-gradient(120deg, #e0f2fe 0%, #e0e7ff 100%);
+  border-color: #bae6fd;
+}
+
+.phase-screen.social .phase-screen-hero {
+  background: linear-gradient(120deg, #fce7f3 0%, #ede8ff 100%);
+  border-color: #fbcfe8;
+}
+
+.phase-screen-hero > div {
+  position: relative;
+  z-index: 1;
+  max-width: 68%;
+}
+
+.phase-screen-hero h1 {
+  color: var(--phase-ink);
+  margin: 14px 0;
+  font-size: 26px;
+  line-height: 1.35;
+  font-weight: 850;
+}
+
+.phase-screen-hero p {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--phase-muted);
+}
+
+.phase-screen-hero img {
+  position: absolute;
+  right: -5%;
+  width: 50%;
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: multiply;
+  opacity: .85;
+}
+
+.phase-screen-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.phase-screen-tags span {
+  padding: 7px 14px;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1.5px solid #ddd6fe;
+  box-shadow: 0 2px 6px rgba(112, 66, 244, 0.08);
+  font-size: 11px;
+  color: var(--phase-accent);
+  font-weight: 700;
+}
+
+.phase-reading-guide {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 24px 0;
+  padding: 22px 26px;
+  border: 1.5px solid #a7f3d0;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfeff 100%);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.06);
+}
+
+.phase-reading-guide p {
+  font-size: 14px;
+  line-height: 1.75;
+  color: #065f46;
+}
+
+.phase-reading-guide strong {
+  color: #047857;
+  font-weight: 800;
+}
+
+.phase-screen .phase-dedicated-content {
+  padding: 0;
+  border: 0;
+  background: none;
+  max-width: 960px;
+  margin: auto;
+}
+
+.phase-dedicated-content .lesson-cards {
+  margin-top: 0;
+  gap: 24px;
+}
+
+.phase-dedicated-content .lesson-card {
+  padding: 30px;
+  border-radius: 18px;
+}
+
+.phase-dedicated-content .theory-paragraph {
+  max-width: 76ch;
+}
+
+.phase-screen-end {
+  max-width: 960px;
+  margin: 28px auto 0;
+  padding: 24px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-top: 1px solid var(--phase-line);
+}
+
+/* Responsividade Tablet e Mobile para Módulos */
+@media (max-width: 1024px) {
+  .phase-screen-hero > div {
+    max-width: 80%;
+  }
+  .phase-screen-hero img {
+    opacity: .35;
+  }
+}
+
+@media (max-width: 768px) {
+  .phase-map {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .phase-map-card {
+    min-height: auto; /* No mobile adapta confortavelmente */
+    padding: 20px 18px;
+  }
+
+  .phase-map-card-header {
+    min-height: auto;
+  }
+
+  .phase-screen-nav {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .phase-screen-hero {
+    padding: 24px 20px;
+    min-height: 0;
+  }
+
+  .phase-screen-hero > div {
+    max-width: 100%;
+  }
+
+  .phase-screen-hero h1 {
+    font-size: 22px;
+  }
+
+  .phase-screen-hero img {
+    opacity: .18;
+    width: 80%;
+    right: -20%;
+  }
+
+  .phase-reading-guide {
+    padding: 18px;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .phase-dedicated-content .lesson-card {
+    padding: 20px 18px;
+  }
+
+  .phase-screen-end {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .phase-screen-end button {
+    width: 100%;
+  }
+}
