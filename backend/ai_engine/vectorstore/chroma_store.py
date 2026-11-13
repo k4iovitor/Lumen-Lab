@@ -1,83 +1,108 @@
 """
-Inicialização e acesso ao ChromaDB com embeddings do Google Gemini.
+Interface de conexão com o banco de dados vetorial ChromaDB em português brasileiro.
 
-Fornece funções para obter o vectorstore persistente e o retriever
-denso utilizado no pipeline de busca híbrida do chatbot Lumia.
-
-Dependências externas (instalar via pip):
-    pip install langchain-google-genai langchain-chroma
+Gerencia a inicialização do modelo de embeddings da Google (Gemini) e a instância
+persistente do ChromaDB utilizada para busca vetorial densa por similaridade de cosseno.
 """
 from __future__ import annotations
 
 import os
 
 
-def get_embeddings():
-    """Retorna o modelo de embeddings do Google Gemini (text-embedding-004)."""
+def obter_modelo_embeddings():
+    """
+    Inicializa e retorna o modelo de geração de representações vetoriais (embeddings).
+
+    Funcionamento:
+      1. Tenta importar a biblioteca GoogleGenerativeAIEmbeddings do LangChain.
+      2. Obtém a chave de API (GEMINI_API_KEY ou GOOGLE_API_KEY) das configurações Django ou do sistema.
+      3. Instancia o modelo 'gemini-embedding-001' homologado na plataforma.
+      4. Retorna o objeto pronto para converter textos em vetores numéricos de alta dimensão.
+
+    Retorna:
+        GoogleGenerativeAIEmbeddings: Instância configurada para vetorização semântica.
+    """
     try:
         from langchain_google_genai import GoogleGenerativeAIEmbeddings
-    except ImportError as exc:
+    except ImportError as erro_import:
         raise ImportError(
-            'langchain-google-genai não instalado. '
-            'Execute: pip install langchain-google-genai'
-        ) from exc
+            'Pacote langchain-google-genai não encontrado. '
+            'Instale com: pip install langchain-google-genai'
+        ) from erro_import
 
     from django.conf import settings
-    api_key = getattr(settings, 'GOOGLE_API_KEY', '') or os.getenv('GOOGLE_API_KEY') or os.getenv('GEMINI_API_KEY', '')
-    api_key = api_key.strip().strip('\'"')
+    chave_api = getattr(settings, 'GOOGLE_API_KEY', '') or os.getenv('GOOGLE_API_KEY') or os.getenv('GEMINI_API_KEY', '')
+    chave_api_limpa = chave_api.strip().strip('\'"')
 
     return GoogleGenerativeAIEmbeddings(
         model='gemini-embedding-001',
-        google_api_key=api_key,
+        google_api_key=chave_api_limpa,
     )
 
 
-def get_vectorstore(persist_directory: str = None, collection_name: str = None):
+def obter_banco_vetorial(diretorio_persistencia: str = None, nome_colecao: str = None):
     """
-    Retorna o vectorstore ChromaDB persistente.
+    Inicializa ou recupera a instância do banco vetorial ChromaDB armazenada em disco.
 
-    Args:
-        persist_directory: Caminho para o diretório de persistência do ChromaDB.
-                           Se None, lê de settings.CHROMA_PERSIST_DIR.
-        collection_name: Nome da coleção ChromaDB.
-                         Se None, lê de settings.CHROMA_COLLECTION_NAME.
-    Returns:
-        Instância Chroma pronta para uso como retriever.
+    Funcionamento:
+      1. Define o diretório de armazenamento e o nome da coleção a partir das configurações do Django.
+      2. Conecta ao banco de dados SQLite interno do ChromaDB na pasta persistente.
+      3. Atribui a função de embedding para cálculo automático de similaridade.
+      4. Retorna a coleção Chroma pronta para operações de busca e inserção.
+
+    Parâmetros:
+        diretorio_persistencia (str, opcional): Caminho absoluto da pasta do banco de dados vetorial.
+        nome_colecao (str, opcional): Nome da coleção no ChromaDB (padrão: lumenlab_docs).
+
+    Retorna:
+        Chroma: Objeto de armazenamento vetorial persistente.
     """
     try:
         from langchain_chroma import Chroma
     except ImportError:
         try:
             from langchain_community.vectorstores import Chroma
-        except ImportError as exc:
+        except ImportError as erro_import:
             raise ImportError(
-                'langchain-chroma não instalado. '
-                'Execute: pip install langchain-chroma'
-            ) from exc
+                'Biblioteca ChromaDB para LangChain não encontrada. '
+                'Instale com: pip install langchain-chroma'
+            ) from erro_import
 
     from django.conf import settings
 
-    persist_dir = persist_directory or getattr(settings, 'CHROMA_PERSIST_DIR', '/tmp/chroma_db')
-    collection = collection_name or getattr(settings, 'CHROMA_COLLECTION_NAME', 'lumenlab_docs')
+    caminho_diretorio = diretorio_persistencia or getattr(settings, 'CHROMA_PERSIST_DIR', '/tmp/chroma_db')
+    identificador_colecao = nome_colecao or getattr(settings, 'CHROMA_COLLECTION_NAME', 'lumenlab_docs')
 
     return Chroma(
-        collection_name=collection,
-        embedding_function=get_embeddings(),
-        persist_directory=persist_dir,
+        collection_name=identificador_colecao,
+        embedding_function=obter_modelo_embeddings(),
+        persist_directory=str(caminho_diretorio),
     )
 
 
-def get_dense_retriever(k: int = 10):
+def obter_recuperador_denso(limite_documentos: int = 10):
     """
-    Retorna o retriever denso baseado em ChromaDB.
+    Cria um recuperador semântico (Retriever) baseado na proximidade vetorial por cosseno.
 
-    Args:
-        k: Número de documentos a recuperar na busca por similaridade.
-    Returns:
-        Retriever ChromaDB configurado.
+    Funcionamento:
+      1. Obtém o banco vetorial ChromaDB persistido.
+      2. Converte a coleção em um retriever com busca por similaridade semântica.
+      3. Define a quantidade máxima de trechos candidatos a serem recuperados.
+
+    Parâmetros:
+        limite_documentos (int): Número máximo de chunks candidatos a retornar (padrão: 10).
+
+    Retorna:
+        VectorStoreRetriever: Recuperador semântico pronto para integração em pipelines LangChain.
     """
-    vectorstore = get_vectorstore()
-    return vectorstore.as_retriever(
+    banco_vetorial = obter_banco_vetorial()
+    return banco_vetorial.as_retriever(
         search_type='similarity',
-        search_kwargs={'k': k},
+        search_kwargs={'k': limite_documentos},
     )
+
+
+# Aliases para retrocompatibilidade
+get_embeddings = obter_modelo_embeddings
+get_vectorstore = obter_banco_vetorial
+get_dense_retriever = obter_recuperador_denso

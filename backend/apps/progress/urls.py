@@ -1,21 +1,19 @@
 """
-Mapeamento de rotas e endpoints do módulo de progresso e assistência socrática do LumenLab.
+Mapeamento de rotas e endpoints do módulo de progresso e assistência socrática do LumenLab em português brasileiro.
 
-Define as rotas acessíveis sob o prefixo `/api/`:
-  - `state/`: Consulta o estado global da aplicação e do estudante.
-  - `navigation/switch/`: Registra telemetria de mudança de tela.
-  - `assistant/chat/`: Canal de conversação pedagógica com a assistente Lumia.
+Define as rotas de telemetria, estado geral e diálogo socrático.
 """
 from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Recuperação do estado geral e indicadores de progresso
-    path('state/', views.get_state, name='app_state'),
+    # Rotas em Português Brasileiro
+    path('estado/', views.obter_estado_aplicacao, name='estado_aplicacao'),
+    path('navegacao/alternar/', views.alternar_secao_navegacao, name='alternar_secao_navegacao'),
+    path('assistente/dialogo/', views.dialogo_assistente_socratica, name='dialogo_assistente_socratica'),
 
-    # Registro de telemetria e navegação entre seções
-    path('navigation/switch/', views.switch_navigation, name='switch_navigation'),
-
-    # Conversação reflexiva e socrática com o agente Lumia
-    path('assistant/chat/', views.assistant_chat, name='assistant_chat'),
+    # Rotas de compatibilidade retroativa
+    path('state/', views.obter_estado_aplicacao, name='app_state'),
+    path('navigation/switch/', views.alternar_secao_navegacao, name='switch_navigation'),
+    path('assistant/chat/', views.dialogo_assistente_socratica, name='assistant_chat'),
 ]

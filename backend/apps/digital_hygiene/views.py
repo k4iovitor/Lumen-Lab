@@ -1,5 +1,5 @@
 """
-Controladores e endpoints da API de higiene digital e rotina consciente do LumenLab.
+Controladores e endpoints da API de higiene digital e rotina consciente do LumenLab em português brasileiro.
 
 Gerencia o armazenamento persistente no banco de dados (PostgreSQL/SQLite)
 de hábitos, atividades de foco offline e tempo consciente de tela,
@@ -16,254 +16,358 @@ import jwt
 from .models import Habit, ScreenTimeGoal
 
 
-def _get_user_from_request(request):
+def _obter_usuario_da_requisicao(requisicao):
     """
-    Identifica o usuário autenticado a partir do cabeçalho Authorization (Bearer JWT),
-    da sessão Django ou do primeiro usuário cadastrado para depuração local.
+    Identifica o usuário autenticado a partir do cabeçalho HTTP Authorization (Bearer JWT).
+
+    Funcionamento passo a passo:
+      1. Extrai o cabeçalho 'Authorization' da requisição.
+      2. Se presente com o prefixo 'Bearer ', extrai o token JWT.
+      3. Decodifica o token usando a chave secreta do Django (SECRET_KEY) e algoritmo HS256.
+      4. Resgata o id_usuario contido no payload e busca o usuário correspondente no banco.
+      5. Se o usuário estiver autenticado via sessão padrão do Django, retorna requisicao.user.
+      6. Em ambiente de desenvolvimento local, fornece fallback para o primeiro usuário cadastrado.
+
+    Parâmetros:
+        requisicao (HttpRequest): Objeto de requisição do Django REST Framework.
+
+    Retorna:
+        User: Instância do usuário autenticado ou None caso não localizado.
     """
-    auth_header = request.headers.get('Authorization', '')
-    if auth_header.startswith('Bearer '):
-        token = auth_header.split(' ', 1)[1].strip()
+    cabecalho_autorizacao = requisicao.headers.get('Authorization', '')
+    if cabecalho_autorizacao.startswith('Bearer '):
+        token_jwt = cabecalho_autorizacao.split(' ', 1)[1].strip()
         try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-            user_id = payload.get('user_id')
-            if user_id:
-                user = User.objects.filter(id=user_id).first()
-                if user:
-                    return user
+            dados_payload = jwt.decode(token_jwt, settings.SECRET_KEY, algorithms=['HS256'])
+            id_usuario = dados_payload.get('user_id') or dados_payload.get('id_usuario')
+            if id_usuario:
+                usuario_localizado = User.objects.filter(id=id_usuario).first()
+                if usuario_localizado:
+                    return usuario_localizado
         except Exception:
             pass
 
-    if request.user and request.user.is_authenticated:
-        return request.user
+    if requisicao.user and requisicao.user.is_authenticated:
+        return requisicao.user
 
-    # Fallback transparente para o primeiro usuário em ambiente local
+    # Fallback para o primeiro usuário em ambiente local de teste
     return User.objects.first()
 
 
+# Alias para compatibilidade
+_get_user_from_request = _obter_usuario_da_requisicao
+
+
 @api_view(['GET', 'POST'])
-def habits_collection(request):
+def colecao_habitos(requisicao):
     """
-    Manipula a coleção de hábitos do estudante:
-      - GET: Retorna os hábitos persistidos do usuário (com suporte a filtros ?date= e intervalo de datas).
-      - POST: Cria e persiste um novo hábito vinculado ao usuário.
+    Manipula a coleção de hábitos do estudante autenticado.
+
+    Funcionamento:
+      - GET: Retorna a lista de hábitos filtrados por data pontual (?date= ou ?data=)
+             ou por intervalo de datas (?start_date= & ?end_date=).
+      - POST: Delega a criação e persistência de um novo hábito para _criar_habito_interno().
+
+    Parâmetros:
+        requisicao: Requisição HTTP contendo filtros de consulta (GET) ou corpo JSON (POST).
+
+    Retorna:
+        Response: Dicionário contendo lista de hábitos ou confirmação do novo registro criado.
     """
-    user = _get_user_from_request(request)
-    if not user:
+    usuario_autenticado = _obter_usuario_da_requisicao(requisicao)
+    if not usuario_autenticado:
         return Response(
-            {'error': 'Usuário não autenticado ou perfil não encontrado.'},
+            {'erro': 'Usuário não autenticado ou perfil não encontrado.', 'error': 'Não autenticado.'},
             status=status.HTTP_401_UNAUTHORIZED
         )
 
-    if request.method == 'GET':
-        query = Habit.objects.filter(user=user)
+    if requisicao.method == 'GET':
+        consulta_habitos = Habit.objects.filter(user=usuario_autenticado)
 
-        target_date = request.query_params.get('date')
-        start_date = request.query_params.get('start_date')
-        end_date = request.query_params.get('end_date')
+        data_alvo = requisicao.query_params.get('date') or requisicao.query_params.get('data')
+        data_inicio = requisicao.query_params.get('start_date') or requisicao.query_params.get('data_inicio')
+        data_fim = requisicao.query_params.get('end_date') or requisicao.query_params.get('data_fim')
 
-        if target_date:
-            query = query.filter(date=target_date)
-        elif start_date and end_date:
-            query = query.filter(date__range=[start_date, end_date])
+        if data_alvo:
+            consulta_habitos = consulta_habitos.filter(date=data_alvo)
+        elif data_inicio and data_fim:
+            consulta_habitos = consulta_habitos.filter(date__range=[data_inicio, data_fim])
 
-        habits_list = [h.to_dict() for h in query.order_by('date', 'time', 'id')]
-        return Response({'success': True, 'habits': habits_list})
+        lista_formatada = [h.to_dict() for h in consulta_habitos.order_by('date', 'time', 'id')]
+        return Response({
+            'sucesso': True,
+            'success': True,
+            'habitos': lista_formatada,
+            'habits': lista_formatada,
+        })
 
-    # POST: Criar novo hábito
-    return _create_habit_internal(request, user)
+    # POST: Encaminha para função de criação interna
+    return _criar_habito_interno(requisicao, usuario_autenticado)
+
+
+# Alias para rota pré-existente
+habits_collection = colecao_habitos
 
 
 @api_view(['POST'])
-def create_habit(request):
+def criar_novo_habito(requisicao):
     """
-    Cria uma nova linha no banco de dados exclusivo de hábitos vinculada ao estudante.
+    Endpoint dedicado para criação e persistência de um novo hábito na agenda.
+
+    Funcionamento:
+      1. Autentica o usuário solicitante via token JWT.
+      2. Valida os campos obrigatórios (título, horário, categoria e data).
+      3. Salva a nova instância no banco relacional.
+
+    Parâmetros:
+        requisicao: Requisição HTTP contendo corpo JSON com dados do hábito.
     """
-    user = _get_user_from_request(request)
-    if not user:
+    usuario_autenticado = _obter_usuario_da_requisicao(requisicao)
+    if not usuario_autenticado:
         return Response(
-            {'error': 'Usuário não autenticado.'},
+            {'erro': 'Usuário não autenticado.', 'error': 'Não autenticado.'},
             status=status.HTTP_401_UNAUTHORIZED
         )
-    return _create_habit_internal(request, user)
+    return _criar_habito_interno(requisicao, usuario_autenticado)
 
 
-def _create_habit_internal(request, user):
-    """Função interna para validação e persistência do hábito no banco de dados."""
-    
-    data = request.data
-    title = str(data.get('title', '')).strip()
-    if not title:
+# Alias para rota pré-existente
+create_habit = criar_novo_habito
+
+
+def _criar_habito_interno(requisicao, usuario):
+    """
+    Função interna para validação estrita e persistência do hábito no banco de dados.
+
+    Funcionamento:
+      1. Extrai o título e valida que não é uma string vazia.
+      2. Converte a data recebida (formato YYYY-MM-DD); caso ausente, adota a data de hoje.
+      3. Valida a categoria (kind) entre 'foco' (offline) e 'online' (consciente).
+      4. Persiste o registro no banco e retorna HTTP 201 Created.
+    """
+    dados_requisicao = requisicao.data
+    titulo_habito = str(dados_requisicao.get('title') or dados_requisicao.get('titulo', '')).strip()
+    if not titulo_habito:
         return Response(
-            {'error': 'O título do hábito é obrigatório.'},
+            {'erro': 'O título do hábito é obrigatório.', 'error': 'Título obrigatório.'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    date_str = data.get('date')
-    if not date_str:
-        target_date = date.today()
+    texto_data = dados_requisicao.get('date') or dados_requisicao.get('data')
+    if not texto_data:
+        data_programada = date.today()
     else:
         try:
-            target_date = datetime.strptime(str(date_str), '%Y-%m-%d').date()
+            data_programada = datetime.strptime(str(texto_data), '%Y-%m-%d').date()
         except ValueError:
             return Response(
-                {'error': 'Formato de data inválido. Utilize YYYY-MM-DD.'},
+                {'erro': 'Formato de data inválido. Utilize YYYY-MM-DD.', 'error': 'Data inválida.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-    time_str = str(data.get('time', '14:00')).strip()
-    kind = str(data.get('kind', 'foco')).strip().lower()
-    if kind not in ['foco', 'online']:
-        kind = 'foco'
+    horario_estipulado = str(dados_requisicao.get('time') or dados_requisicao.get('horario', '14:00')).strip()
+    tipo_atividade = str(dados_requisicao.get('kind') or dados_requisicao.get('tipo', 'foco')).strip().lower()
+    if tipo_atividade not in ['foco', 'online']:
+        tipo_atividade = 'foco'
 
-    description = str(data.get('description', '')).strip()
-    if not description:
-        description = 'Hábito de foco e higiene digital planejado na agenda.'
+    descricao_texto = str(dados_requisicao.get('description') or dados_requisicao.get('descricao', '')).strip()
+    if not descricao_texto:
+        descricao_texto = 'Hábito de foco e higiene digital planejado na agenda.'
 
-    # Persiste a linha na tabela exclusiva de hábitos
-    habit = Habit.objects.create(
-        user=user,
-        title=title,
-        description=description,
-        date=target_date,
-        time=time_str,
-        kind=kind,
+    # Criação e persistência do hábito no banco de dados
+    registro_habito = Habit.objects.create(
+        user=usuario,
+        title=titulo_habito,
+        description=descricao_texto,
+        date=data_programada,
+        time=horario_estipulado,
+        kind=tipo_atividade,
         finished=False
     )
 
     return Response(
-        {'success': True, 'habit': habit.to_dict()},
+        {
+            'sucesso': True,
+            'success': True,
+            'habito': registro_habito.to_dict(),
+            'habit': registro_habito.to_dict(),
+        },
         status=status.HTTP_201_CREATED
     )
 
 
-@api_view(['POST'])
-def toggle_habit(request):
-    """
-    Alterna o status de conclusão de um hábito persistido no banco de dados.
+# Alias para função interna
+_create_habit_internal = _criar_habito_interno
 
-    Parâmetros da Requisição (JSON):
-        id (str|int): Identificador único do hábito.
-        finished (bool): Novo estado booleano de conclusão.
+
+@api_view(['POST'])
+def alternar_conclusao_habito(requisicao):
+    """
+    Alterna o status de conclusão (concluído / pendente) de um hábito persistido.
+
+    Funcionamento:
+      1. Lê o identificador do hábito ('id' ou 'id_habito') e o booleano de conclusão ('finished' ou 'concluido').
+      2. Localiza o hábito no banco de dados.
+      3. Atualiza o campo finished e persiste a alteração.
 
     Retorna:
-        Response: Confirmação da atualização com o registro persistido.
+        Response: Dicionário confirmando a alteração de status do hábito.
     """
-    user = _get_user_from_request(request)
-    habit_id = request.data.get('id')
-    finished = request.data.get('finished', False)
+    _ = _obter_usuario_da_requisicao(requisicao)
+    id_habito = requisicao.data.get('id') or requisicao.data.get('id_habito')
+    esta_concluido = requisicao.data.get('finished') if 'finished' in requisicao.data else requisicao.data.get('concluido', False)
 
-    if not habit_id:
+    if not id_habito:
         return Response(
-            {'error': 'Identificador do hábito não informado.'},
+            {'erro': 'Identificador do hábito não informado.', 'error': 'ID ausente.'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Busca o hábito garantindo a integridade relacional com o usuário
-    habit = Habit.objects.filter(id=habit_id).first()
-    if not habit:
+    registro_habito = Habit.objects.filter(id=id_habito).first()
+    if not registro_habito:
         return Response(
-            {'error': f'Hábito com ID {habit_id} não encontrado.'},
+            {'erro': f'Hábito com ID {id_habito} não localizado.', 'error': 'Não localizado.'},
             status=status.HTTP_404_NOT_FOUND
         )
 
-    habit.finished = bool(finished)
-    habit.save()
+    registro_habito.finished = bool(esta_concluido)
+    registro_habito.save()
 
     return Response({
+        'sucesso': True,
         'success': True,
-        'habitId': str(habit.id),
-        'finished': habit.finished,
-        'habit': habit.to_dict()
+        'id_habito': str(registro_habito.id),
+        'habitId': str(registro_habito.id),
+        'concluido': registro_habito.finished,
+        'finished': registro_habito.finished,
+        'habito': registro_habito.to_dict(),
+        'habit': registro_habito.to_dict(),
     })
 
 
-@api_view(['POST'])
-def delete_habit(request):
-    """
-    Remove um hábito persistido da agenda do estudante.
+# Alias para rota pré-existente
+toggle_habit = alternar_conclusao_habito
 
-    Parâmetros da Requisição (JSON):
-        id (str|int): Identificador único do hábito a ser excluído.
+
+@api_view(['POST'])
+def excluir_habito_agenda(requisicao):
     """
-    habit_id = request.data.get('id')
-    if not habit_id:
+    Remove permanentemente um hábito do banco de dados relacional.
+
+    Parâmetros:
+        requisicao: Requisição POST contendo corpo JSON com {'id': <id_habito>}.
+    """
+    _ = _obter_usuario_da_requisicao(requisicao)
+    id_habito = requisicao.data.get('id') or requisicao.data.get('id_habito')
+
+    if not id_habito:
         return Response(
-            {'error': 'Identificador do hábito não informado.'},
+            {'erro': 'Identificador do hábito não informado.', 'error': 'ID ausente.'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    habit = Habit.objects.filter(id=habit_id).first()
-    if not habit:
+    registro_habito = Habit.objects.filter(id=id_habito).first()
+    if not registro_habito:
         return Response(
-            {'error': f'Hábito com ID {habit_id} não encontrado.'},
+            {'erro': f'Hábito com ID {id_habito} não localizado.', 'error': 'Não localizado.'},
             status=status.HTTP_404_NOT_FOUND
         )
 
-    habit.delete()
-    return Response({'success': True, 'deletedId': str(habit_id)})
+    registro_habito.delete()
+    return Response({
+        'sucesso': True,
+        'success': True,
+        'id_excluido': str(id_habito),
+        'deletedId': str(id_habito),
+    })
+
+
+# Alias para rota pré-existente
+delete_habit = excluir_habito_agenda
 
 
 @api_view(['GET', 'POST'])
-def screen_time_goal_view(request):
+def visualizacao_meta_tempo_tela(requisicao):
     """
-    Consulta ou atualiza as metas de tempo de tela e desconexão consciente do estudante.
+    Consulta ou atualiza as metas e proporções de tempo consciente de tela do estudante.
 
-    Regras de Negócio:
-      - Limite máximo diário estrito: 4 horas (240 minutos).
-      - Proporção exata para entretenimento:
-          * 75% destinado para Jogos e Vídeos (máximo de 3h quando total for 4h).
-          * 25% destinado para Redes Sociais (máximo de 1h quando total for 4h).
-      - Reserva de tempo dedicado para cumprimento de afazeres escolares e foco offline.
+    Regras de Negócio Pedagógicas:
+      - Limite diário estrito de no máximo 240 minutos (4 horas).
+      - Divisão automática de entretenimento: 75% para jogos/vídeos e 25% para redes sociais.
+      - Tempo protegido obrigatório para estudos e afazeres offline.
+
+    Parâmetros:
+        requisicao: GET para consulta ou POST com payload de atualização.
     """
-    user = _get_user_from_request(request)
-    if not user:
+    usuario_autenticado = _obter_usuario_da_requisicao(requisicao)
+    if not usuario_autenticado:
         return Response(
-            {'error': 'Usuário não autenticado.'},
+            {'erro': 'Usuário não autenticado.', 'error': 'Não autenticado.'},
             status=status.HTTP_401_UNAUTHORIZED
         )
 
-    goal, _ = ScreenTimeGoal.objects.get_or_create(user=user)
+    registro_meta, _ = ScreenTimeGoal.objects.get_or_create(user=usuario_autenticado)
 
-    if request.method == 'GET':
-        return Response({'success': True, 'screenTime': goal.to_dict()})
+    if requisicao.method == 'GET':
+        return Response({
+            'sucesso': True,
+            'success': True,
+            'tempoTela': registro_meta.to_dict(),
+            'screenTime': registro_meta.to_dict(),
+        })
 
-    # POST: Atualiza as metas
-    data = request.data
-    daily_minutes = data.get('dailyLimitMinutes')
-    if daily_minutes is None and 'dailyLimitHours' in data:
+    # POST: Atualiza os limites e cálculos proporcionais
+    dados_corpo = requisicao.data
+    minutos_diarios = dados_corpo.get('dailyLimitMinutes') or dados_corpo.get('limiteDiarioMinutos')
+
+    if minutos_diarios is None and ('dailyLimitHours' in dados_corpo or 'limiteDiarioHoras' in dados_corpo):
         try:
-            daily_minutes = int(float(data['dailyLimitHours']) * 60)
+            horas_valor = dados_corpo.get('dailyLimitHours') or dados_corpo.get('limiteDiarioHoras')
+            minutos_diarios = int(float(horas_valor) * 60)
         except (ValueError, TypeError):
             pass
 
-    if daily_minutes is not None:
+    if minutos_diarios is not None:
         try:
-            minutes_val = int(daily_minutes)
-            # Aplica teto estrito de 4 horas (240 minutos)
-            minutes_val = min(240, max(30, minutes_val))
-            goal.daily_limit_minutes = minutes_val
+            valor_minutos = int(minutos_diarios)
+            # Teto estrito entre 30 minutos e 240 minutos (4h)
+            valor_minutos = min(240, max(30, valor_minutos))
+            registro_meta.daily_limit_minutes = valor_minutos
         except (ValueError, TypeError):
             return Response(
-                {'error': 'Valor de minutos inválido.'},
+                {'erro': 'Valor de minutos inválido.', 'error': 'Minutos inválidos.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-    chores_minutes = data.get('choresReservedMinutes')
-    if chores_minutes is not None:
+    minutos_afazeres = dados_corpo.get('choresReservedMinutes') or dados_corpo.get('minutosAfazeresReservados')
+    if minutos_afazeres is not None:
         try:
-            goal.chores_reserved_minutes = max(0, int(chores_minutes))
+            registro_meta.chores_reserved_minutes = max(0, int(minutos_afazeres))
         except (ValueError, TypeError):
             pass
 
-    # Atualizações opcionais de consumo real
-    if 'gamesVideoUsedMinutes' in data:
-        goal.games_video_used_minutes = max(0, int(data['gamesVideoUsedMinutes']))
-    if 'socialMediaUsedMinutes' in data:
-        goal.social_media_used_minutes = max(0, int(data['socialMediaUsedMinutes']))
-    if 'studyUsedMinutes' in data:
-        goal.study_used_minutes = max(0, int(data['studyUsedMinutes']))
+    # Atualizações opcionais de consumo real do dia
+    if 'gamesVideoUsedMinutes' in dados_corpo or 'jogosVideoMinutosUsados' in dados_corpo:
+        valor = dados_corpo.get('gamesVideoUsedMinutes') or dados_corpo.get('jogosVideoMinutosUsados')
+        registro_meta.games_video_used_minutes = max(0, int(valor))
 
-    goal.save()
-    return Response({'success': True, 'screenTime': goal.to_dict()})
+    if 'socialMediaUsedMinutes' in dados_corpo or 'redesSociaisMinutosUsados' in dados_corpo:
+        valor = dados_corpo.get('socialMediaUsedMinutes') or dados_corpo.get('redesSociaisMinutosUsados')
+        registro_meta.social_media_used_minutes = max(0, int(valor))
 
+    if 'studyUsedMinutes' in dados_corpo or 'estudosMinutosUsados' in dados_corpo:
+        valor = dados_corpo.get('studyUsedMinutes') or dados_corpo.get('estudosMinutosUsados')
+        registro_meta.study_used_minutes = max(0, int(valor))
+
+    registro_meta.save()
+
+    return Response({
+        'sucesso': True,
+        'success': True,
+        'tempoTela': registro_meta.to_dict(),
+        'screenTime': registro_meta.to_dict(),
+    })
+
+
+# Alias para rota pré-existente
+screen_time_goal_view = visualizacao_meta_tempo_tela

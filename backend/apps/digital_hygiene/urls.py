@@ -1,24 +1,24 @@
 """
-Mapeamento de rotas e endpoints do módulo de higiene digital do LumenLab.
+Mapeamento de rotas e endpoints do módulo de higiene digital do LumenLab em português brasileiro.
 
-Define as rotas de listagem, criação, alternância de status e remoção de hábitos.
+Define as rotas de listagem, criação, alternância de status e remoção de hábitos,
+além da gestão das metas de tempo de tela e desconexão consciente.
 """
 from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Coleção principal de hábitos (GET para listar, POST para criar)
-    path('habits/', views.habits_collection, name='habits_collection'),
+    # Rotas em Português Brasileiro
+    path('habitos/', views.colecao_habitos, name='colecao_habitos'),
+    path('habitos/criar/', views.criar_novo_habito, name='criar_novo_habito'),
+    path('habitos/alternar/', views.alternar_conclusao_habito, name='alternar_conclusao_habito'),
+    path('habitos/excluir/', views.excluir_habito_agenda, name='excluir_habito_agenda'),
+    path('tempo-tela/', views.visualizacao_meta_tempo_tela, name='meta_tempo_tela'),
 
-    # Criação explícita de hábitos
-    path('habits/create/', views.create_habit, name='create_habit'),
-
-    # Alternância de status de conclusão
-    path('habits/toggle/', views.toggle_habit, name='toggle_habit'),
-
-    # Remoção de hábitos da agenda
-    path('habits/delete/', views.delete_habit, name='delete_habit'),
-
-    # Metas de tempo de tela, proporção jogos/redes e reserva para afazeres
-    path('screen-time/', views.screen_time_goal_view, name='screen_time_goal'),
+    # Rotas de compatibilidade retroativa
+    path('habits/', views.colecao_habitos, name='habits_collection'),
+    path('habits/create/', views.criar_novo_habito, name='create_habit'),
+    path('habits/toggle/', views.alternar_conclusao_habito, name='toggle_habit'),
+    path('habits/delete/', views.excluir_habito_agenda, name='delete_habit'),
+    path('screen-time/', views.visualizacao_meta_tempo_tela, name='screen_time_goal'),
 ]

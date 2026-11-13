@@ -1,5 +1,7 @@
 """
-Roteamento de URLs do chatbot Lumia.
+Roteamento de URLs do chatbot Lumia em português brasileiro.
+
+Configura as rotas para envio de mensagens com streaming SSE e histórico relacional.
 """
 from django.urls import path
 from . import views
@@ -7,12 +9,17 @@ from . import views
 app_name = 'chatbot'
 
 urlpatterns = [
-    # Endpoint principal: envia mensagem e recebe streaming SSE
-    path('message/', views.message_view, name='message'),
+    # Rota principal para envio de mensagem e streaming Server-Sent Events (SSE)
+    path('mensagem/', views.visualizacao_mensagem, name='mensagem'),
 
-    # Histórico de uma sessão específica
-    path('session/<str:session_id>/', views.session_history_view, name='session_history'),
+    # Recuperação do histórico de uma sessão específica
+    path('sessao/<str:id_sessao>/', views.visualizacao_historico_sessao, name='historico_sessao'),
 
-    # Lista de sessões do usuário
-    path('sessions/', views.list_sessions_view, name='list_sessions'),
+    # Listagem de todas as sessões do estudante
+    path('sessoes/', views.visualizacao_listar_sessoes, name='listar_sessoes'),
+
+    # Rotas espelho para retrocompatibilidade
+    path('message/', views.visualizacao_mensagem, name='message_legado'),
+    path('session/<str:id_sessao>/', views.visualizacao_historico_sessao, name='session_history_legado'),
+    path('sessions/', views.visualizacao_listar_sessoes, name='sessions_legado'),
 ]

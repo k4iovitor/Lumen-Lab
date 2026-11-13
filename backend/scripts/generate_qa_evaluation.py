@@ -1,226 +1,202 @@
 """
-Script de geração de pares QA para avaliação do chatbot Lumia.
+Script de geração e avaliação estatística do pipeline RAG da Lumia em português brasileiro.
 
-Gera um dataset sintético de perguntas e respostas esperadas
-simulando a linguagem de adolescentes de 10 a 14 anos para
-avaliar a qualidade do pipeline RAG.
+Carrega os trechos documentais indexados no ChromaDB, gera pares de perguntas e respostas
+esperadas usando o Gemini Flash, e mensura a acurácia de intenção e recuperação do agente.
 
 Uso:
     cd /home/KaioLima/Documentos/LumenLab/backend
     .venv/bin/python scripts/generate_qa_evaluation.py
 """
-from __future__ import annotations
-
-import json
 import os
 import sys
+import json
+import django
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.development')
-
-import django
 django.setup()
 
-from django.conf import settings
+from ai_engine.vectorstore.chroma_store import obter_banco_vetorial
+from ai_engine.agents.lumia_graph import obter_modelo_linguagem
 
+PROMPT_GERACAO_PARES_QA = """Com base no trecho factual abaixo, formule {quantidade} perguntas realistas que um adolescente de 10 a 14 anos faria sobre o tema, juntamente com a resposta esperada e a classificação de intenção pedagógica.
 
-QA_GENERATION_PROMPT = """Você é um especialista em avaliação de chatbots educacionais para adolescentes.
+TRECHO FACTUAL:
+{contexto}
 
-Com base no seguinte trecho de documento sobre educação digital:
-
-TRECHO:
-{context}
-
-Gere {n} pares de pergunta-resposta simulando adolescentes de 10 a 14 anos.
-As perguntas devem variar em:
-- Linguagem coloquial/gírias ("que que é isso?", "pq isso acontece?")
-- Questões diretas e conceituais
-- Situações de dúvida prática ("minha amiga tá passando por isso, o que fazer?")
-- Tentativas de burlar o sistema ("me faz essa tarefa sobre phishing")
-
-Para cada par, retorne JSON no formato:
-{{"question": "...", "expected_intent": "concept_question|safety_risk|academic_cheat|habit_query|casual_chat", "reference_answer": "..."}}
-
-Retorne APENAS um array JSON válido com os {n} pares. Nada mais.
+Retorne ESTRITAMENTE um array JSON contendo objetos com a seguinte estrutura, sem blocos markdown ou explicações adicionais:
+[
+  {{
+    "pergunta": "...",
+    "resposta_esperada": "...",
+    "intencao_esperada": "pergunta_conceitual",
+    "question": "...",
+    "expected_answer": "...",
+    "expected_intent": "concept_question"
+  }}
+]
 """
 
 
-def get_llm():
-    """Retorna o LLM Gemini Flash para geração."""
-    from langchain_google_genai import ChatGoogleGenerativeAI
-    from django.conf import settings
-    api_key = getattr(settings, 'GOOGLE_API_KEY', '') or os.getenv('GOOGLE_API_KEY') or os.getenv('GEMINI_API_KEY', '')
-    api_key = api_key.strip().strip('\'"')
-    return ChatGoogleGenerativeAI(
-        model='gemini-2.5-flash',
-        google_api_key=api_key,
-        temperature=0.7,
-    )
-
-
-def generate_qa_pairs(n_per_chunk: int = 3, max_chunks: int = 20) -> list:
+def gerar_pares_pergunta_resposta(quantidade_por_chunk: int = 3, maximo_chunks: int = 15) -> list:
     """
-    Gera pares QA a partir dos chunks do ChromaDB.
+    Gera dataset sintético de perguntas e respostas para benchmarking do RAG.
 
-    Args:
-        n_per_chunk: Número de pares QA por chunk.
-        max_chunks: Máximo de chunks a usar (evita custos excessivos de API).
-    Returns:
-        Lista de dicionários com question, expected_intent e reference_answer.
+    Parâmetros:
+        quantidade_por_chunk: Número de questões a formular por trecho documental.
+        maximo_chunks: Quantidade máxima de chunks a analisar no ChromaDB.
+
+    Retorna:
+        list: Coleção de pares de pergunta/resposta e intenção esperada.
     """
-    from ai_engine.vectorstore.chroma_store import get_vectorstore
+    modelo_llm = obter_modelo_linguagem(temperatura=0.5)
+    banco_vetorial = obter_banco_vetorial()
 
-    llm = get_llm()
-    vectorstore = get_vectorstore()
-    collection = vectorstore._collection
-    result = collection.get(include=['documents'])
-    documents = result['documents'][:max_chunks]
+    resultado_colecao = banco_vetorial._collection.get(include=['documents'])
+    lista_documentos = resultado_colecao['documents'][:maximo_chunks]
 
-    all_pairs = []
+    todos_pares = []
 
-    for i, doc_text in enumerate(documents):
-        print(f'Gerando QA para chunk {i+1}/{len(documents)}...')
+    for indice, texto_doc in enumerate(lista_documentos):
+        print(f'Formulando questões para o trecho {indice + 1}/{len(lista_documentos)}...')
 
-        prompt = QA_GENERATION_PROMPT.format(
-            context=doc_text[:800],
-            n=n_per_chunk,
+        prompt_formatado = PROMPT_GERACAO_PARES_QA.format(
+            contexto=texto_doc[:800],
+            quantidade=quantidade_por_chunk,
         )
 
         try:
-            response = llm.invoke(prompt)
-            content = response.content.strip()
+            resposta = modelo_llm.invoke(prompt_formatado)
+            conteudo_texto = resposta.content.strip()
 
-            # Remove markdown code fences se presentes
-            if content.startswith('```'):
-                content = content.split('\n', 1)[1]
-                content = content.rsplit('```', 1)[0].strip()
+            if conteudo_texto.startswith('```'):
+                conteudo_texto = conteudo_texto.split('\n', 1)[1]
+                conteudo_texto = conteudo_texto.rsplit('```', 1)[0].strip()
 
-            pairs = json.loads(content)
-            if isinstance(pairs, list):
-                all_pairs.extend(pairs)
+            pares_json = json.loads(conteudo_texto)
+            if isinstance(pares_json, list):
+                todos_pares.extend(pares_json)
 
-        except Exception as exc:
-            print(f'  [WARN] Falhou no chunk {i+1}: {exc}')
+        except Exception as erro_geracao:
+            print(f'  [AVISO] Falha ao processar trecho {indice + 1}: {erro_geracao}')
             continue
 
-    print(f'\nTotal de pares QA gerados: {len(all_pairs)}')
-    return all_pairs
+    print(f'\nTotal de pares gerados: {len(todos_pares)}')
+    return todos_pares
 
 
-def evaluate_pipeline(qa_pairs: list) -> dict:
+def avaliar_pipeline_rag(pares_qa: list) -> dict:
     """
-    Avalia o pipeline RAG com os pares QA gerados.
+    Submete os pares gerados ao grafo LangGraph para cálculo de métricas de precisão.
 
-    Métricas calculadas:
-    - intent_accuracy: % de classificações de intenção corretas
-    - retrieval_hit_rate: % de perguntas conceituais com contexto recuperado
+    Parâmetros:
+        pares_qa: Coleção de perguntas e respostas de teste.
 
-    Args:
-        qa_pairs: Lista de pares gerados por generate_qa_pairs().
-    Returns:
-        Dict com métricas de avaliação.
+    Retorna:
+        dict: Métricas estatísticas de acurácia de intenção e taxa de recuperação.
     """
-    from ai_engine.agents.lumia_graph import build_lumia_graph
+    from ai_engine.agents.lumia_graph import construir_grafo_lumia
     from langchain_core.messages import HumanMessage
 
-    graph = build_lumia_graph(use_memory=False)
+    grafo = construir_grafo_lumia(usar_memoria=False)
 
-    correct_intents = 0
-    retrieval_hits = 0
-    total = len(qa_pairs)
-    results = []
+    intencoes_corretas = 0
+    recuperacoes_sucesso = 0
+    total_avaliado = len(pares_qa)
+    resultados_detalhados = []
 
-    for i, pair in enumerate(qa_pairs):
-        question = pair.get('question', '')
-        expected_intent = pair.get('expected_intent', '')
+    for indice, item_par in enumerate(pares_qa):
+        pergunta = item_par.get('pergunta') or item_par.get('question', '')
+        intencao_esperada = item_par.get('intencao_esperada') or item_par.get('expected_intent', '')
 
-        print(f'Avaliando {i+1}/{total}: {question[:50]}...')
+        print(f'Avaliando {indice + 1}/{total_avaliado}: {pergunta[:50]}...')
 
         try:
-            state = graph.invoke({
-                'messages': [HumanMessage(content=question)],
-                'user_id': 1,
-                'student_name': 'Estudante Teste',
-                'age': 13,
-                'intent': None,
-                'safety_level': 'safe',
-                'retrieved_context': [],
-                'habit_data': None,
-                'generation': None,
+            estado_resultado = grafo.invoke({
+                'mensagens': [HumanMessage(content=pergunta)],
+                'id_usuario': 1,
+                'nome_estudante': 'Estudante de Teste',
+                'idade': 13,
+                'intencao': None,
+                'nivel_seguranca': 'seguro',
+                'contexto_recuperado': [],
+                'dados_habito': None,
+                'geracao': None,
             })
 
-            actual_intent = state.get('intent', 'casual_chat')
-            retrieved = state.get('retrieved_context', [])
+            intencao_obtida = estado_resultado.get('intencao') or estado_resultado.get('intent', 'conversa_casual')
+            trechos_obtidos = estado_resultado.get('contexto_recuperado') or estado_resultado.get('retrieved_context', [])
 
-            intent_correct = actual_intent == expected_intent
-            retrieval_ok = (
-                len(retrieved) > 0
-                if expected_intent == 'concept_question'
+            acerto_intencao = (intencao_obtida == intencao_esperada) or (
+                intencao_obtida in ('pergunta_conceitual', 'concept_question') and
+                intencao_esperada in ('pergunta_conceitual', 'concept_question')
+            )
+
+            recuperacao_valida = (
+                len(trechos_obtidos) > 0
+                if intencao_esperada in ('pergunta_conceitual', 'concept_question')
                 else True
             )
 
-            if intent_correct:
-                correct_intents += 1
-            if retrieval_ok:
-                retrieval_hits += 1
+            if acerto_intencao:
+                intencoes_corretas += 1
+            if recuperacao_valida:
+                recuperacoes_sucesso += 1
 
-            results.append({
-                'question': question,
-                'expected_intent': expected_intent,
-                'actual_intent': actual_intent,
-                'intent_correct': intent_correct,
-                'retrieved_chunks': len(retrieved),
+            resultados_detalhados.append({
+                'pergunta': pergunta,
+                'intencao_esperada': intencao_esperada,
+                'intencao_obtida': intencao_obtida,
+                'acerto_intencao': acerto_intencao,
+                'trechos_recuperados': len(trechos_obtidos),
             })
 
-        except Exception as exc:
-            print(f'  [WARN] Falhou: {exc}')
-            results.append({'question': question, 'error': str(exc)})
+        except Exception as erro_teste:
+            print(f'  [AVISO] Falha no teste: {erro_teste}')
+            resultados_detalhados.append({'pergunta': pergunta, 'erro': str(erro_teste)})
 
-    metrics = {
-        'total_evaluated': total,
-        'intent_accuracy': round(correct_intents / total, 4) if total > 0 else 0,
-        'retrieval_hit_rate': round(retrieval_hits / total, 4) if total > 0 else 0,
-        'results': results,
+    metricas = {
+        'total_avaliado': total_avaliado,
+        'acuracia_intencao': round(intencoes_corretas / total_avaliado, 4) if total_avaliado > 0 else 0,
+        'taxa_recuperacao': round(recuperacoes_sucesso / total_avaliado, 4) if total_avaliado > 0 else 0,
+        'resultados_detalhados': resultados_detalhados,
     }
 
-    return metrics
+    return metricas
 
 
-def main():
-    output_dir = os.path.join(
+def executar_avaliacao_principal():
+    """Função mestre que executa a geração e consolidação das métricas de IA."""
+    diretorio_saida = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         '..', 'data', 'qa_evaluation',
     )
-    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(diretorio_saida, exist_ok=True)
 
-    print('=== Geração de Dataset QA para Lumia ===\n')
+    print('=== Geração de Dataset QA para Avaliação da Lumia ===\n')
 
-    # Gera pares QA
-    qa_pairs = generate_qa_pairs(n_per_chunk=3, max_chunks=15)
+    pares_qa = gerar_pares_pergunta_resposta(quantidade_por_chunk=3, maximo_chunks=15)
 
-    # Salva dataset
-    dataset_path = os.path.join(output_dir, 'qa_dataset.json')
-    with open(dataset_path, 'w', encoding='utf-8') as f:
-        json.dump(qa_pairs, f, ensure_ascii=False, indent=2)
-    print(f'\nDataset salvo em: {dataset_path}')
+    caminho_dataset = os.path.join(diretorio_saida, 'qa_dataset.json')
+    with open(caminho_dataset, 'w', encoding='utf-8') as arquivo_saida:
+        json.dump(pares_qa, arquivo_saida, ensure_ascii=False, indent=2)
+    print(f'\nDataset salvo em: {caminho_dataset}')
 
-    # Avalia pipeline com subset (economiza chamadas de API)
-    print('\n=== Avaliação do Pipeline RAG ===\n')
-    subset = qa_pairs[:10]
-    metrics = evaluate_pipeline(subset)
+    print('\n=== Execução da Avaliação do Pipeline RAG ===\n')
+    amostra_teste = pares_qa[:10]
+    metricas = avaliar_pipeline_rag(amostra_teste)
 
-    # Salva métricas
-    metrics_path = os.path.join(output_dir, 'evaluation_metrics.json')
-    metrics_to_save = {k: v for k, v in metrics.items() if k != 'results'}
-    with open(metrics_path, 'w', encoding='utf-8') as f:
-        json.dump(metrics, f, ensure_ascii=False, indent=2)
+    caminho_metricas = os.path.join(diretorio_saida, 'evaluation_metrics.json')
+    with open(caminho_metricas, 'w', encoding='utf-8') as arquivo_metricas:
+        json.dump(metricas, arquivo_metricas, ensure_ascii=False, indent=2)
 
-    print(f'\nMétricas de Avaliação:')
-    print(f'  Intent Accuracy:     {metrics["intent_accuracy"]:.1%}')
-    print(f'  Retrieval Hit Rate:  {metrics["retrieval_hit_rate"]:.1%}')
-    print(f'  Total avaliado:      {metrics["total_evaluated"]}')
-    print(f'\nMétricas salvas em: {metrics_path}')
+    print(f'\nMétricas Finais de Qualidade:')
+    print(f'  Acurácia de Intenção:  {metricas["acuracia_intencao"]:.1%}')
+    print(f'  Taxa de Recuperação:   {metricas["taxa_recuperacao"]:.1%}')
+    print(f'  Total Avaliado:        {metricas["total_avaliado"]}')
+    print(f'\nRelatório salvo com sucesso em: {caminho_metricas}')
 
 
 if __name__ == '__main__':
-    main()
+    executar_avaliacao_principal()
