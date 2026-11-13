@@ -10,7 +10,6 @@
 [![LangChain](https://img.shields.io/badge/LangChain-0.2-1C3C3C?style=for-the-badge&logo=chainlink&logoColor=white)](https://python.langchain.com/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-0.1-FF6B35?style=for-the-badge)](https://www.langchain.com/langgraph)
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-0.5-FF4D4D?style=for-the-badge)](https://www.trychroma.com/)
-[![License](https://img.shields.io/badge/Licença-MIT-green?style=for-the-badge)](LICENSE)
 
 </div>
 
