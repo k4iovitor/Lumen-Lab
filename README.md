@@ -29,8 +29,6 @@
 - [Variáveis de Ambiente](#variáveis-de-ambiente)
 - [Endpoints da API](#endpoints-da-api)
 - [Testes e Avaliação](#testes-e-avaliação)
-- [Contribuindo](#contribuindo)
-- [Licença](#licença)
 
 ---
 
